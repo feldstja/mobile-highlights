@@ -118,8 +118,8 @@ if fileitem.filename:
    message = 'The file "' + fn + '" was uploaded successfully'
 else:
    message = 'No file was uploaded'
-print(message)
-
+print """\
+Content-Type: text/html\n
 # cgitb.enable()
 # form=cgi.FieldStorage()
 # who = form.getvalue('who')	# we expect certain fields to be there, value may be None if field is left blank
