@@ -1,15 +1,18 @@
 import cv2
 import numpy as np
-import cgi, cgitb
-import os
+# import cgi, cgitb
+# import os
 # import cvzone
-cgitb.enable()
+# cgitb.enable()
 
 
 #
 # from cvzone.ColorModule import ColorFinder
 # hog = cv2.HOGDescriptor()
 # hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+ballys_score = 0
+tnt_score = 0
+espn_score = 0
 
 temp_ballys = cv2.imread('nba_logos/ballys_logo.png', 0)
 sc_pct_ballys = 5300
@@ -47,9 +50,9 @@ def detect_logo(img_gray, temp_logo, sc_pct, thresh):
 
     # resize image
     resized = cv2.resize(temp_logo_copy, dim, interpolation = cv2.INTER_AREA)
-    cv2.imshow(str(thresh), temp_logo)
+    # cv2.imshow(str(thresh), temp_logo)
     w, h = resized.shape[::-1]
-
+    # print(w, h)
     res = cv2.matchTemplate(img_gray_logo,resized,cv2.TM_CCOEFF_NORMED)
     # threshold = 0.58 #ballys
     # threshold = thresh
@@ -58,14 +61,14 @@ def detect_logo(img_gray, temp_logo, sc_pct, thresh):
     loc = np.where(res >= thresh)
     # # print(loc)
     # # print(max(res[0]))
-    i = 0
-    for pt in zip(*loc[::-1]):
+    # i = 0
+    # for pt in zip(*loc[::-1]):
         # print(pt)
-        i+= 1
+        # i+= 1
         # if (i == 1):
-        cv2.rectangle(img_gray_logo, pt, (pt[0] + w, pt[1] + h), (255,100,0), 2)
+        # cv2.rectangle(img_gray_logo, pt, (pt[0] + w, pt[1] + h), (255,100,0), 2)
 
-    cv2.imshow(str(sc_pct), img_gray_logo)
+    # cv2.imshow(str(sc_pct), img_gray_logo)
     return(len(loc[0]))
 
     # # print(i)
@@ -74,7 +77,7 @@ def detect_logo(img_gray, temp_logo, sc_pct, thresh):
 
     # return(img_rgb)
 def detect_tv(img):
-    # global temp_ballys
+    global ballys_score, tnt_score, espn_score
     img_full = img.copy()
     img_full = cv2.cvtColor(img_full, cv2.COLOR_RGB2GRAY)
     width = img_full.shape[1]
@@ -86,17 +89,29 @@ def detect_tv(img):
     img_tnt = img_full[int(.75 * height):int(.9 * height), int(.85 * width):int(.95 * width)]
     # _, img_espn = cv2.threshold(img_espn, 127, 255, cv2.THRESH_BINARY)
 
-    ballys_i = detect_logo(img_ballys, temp_ballys, sc_pct_ballys, thresh_ballys)
-    espn_i = detect_logo(img_espn, temp_espn, sc_pct_espn, thresh_espn)
-    tnt_i = detect_logo(img_tnt, temp_tnt, sc_pct_tnt, thresh_tnt)
+    ballys_score += detect_logo(img_ballys, temp_ballys, sc_pct_ballys, thresh_ballys)
+    espn_score += detect_logo(img_espn, temp_espn, sc_pct_espn, thresh_espn)
+    tnt_score +=  detect_logo(img_tnt, temp_tnt, sc_pct_tnt, thresh_tnt)
+
+    # ballys_score += ballys_i
+    # espn_score += espn_i
+    # tnt_score += tnt_i
+
+    scores = [("ballys", ballys_score), ("espn", espn_score), ("tnt", tnt_score)]
+    res = max(scores, key = lambda i : i[1])
+    # if(res[1] > 0):
+    #     print(res[0], ": ", res[1])
+
     # cv2.imshow(img_ballys_proc)
-    if(ballys_i > 0):
-        print("BALLYS: ", ballys_i)
-    if(espn_i > 0):
-        print("ESPN: ", espn_i)
-    if(tnt_i > 0):
-        print("TNT: ", tnt_i)
-    return (img_tnt)
+    # if(ballys_i > 0):
+    #     ballys
+    #     print("BALLYS: ", ballys_i)
+    # if(espn_i > 0):
+    #     print("ESPN: ", espn_i)
+    # if(tnt_i > 0):
+    #     print("TNT: ", tnt_i)
+    # print(max(ballys_score, espn_score, tnt_score))
+    return (res)
 
     # IDEA: add up i scores on video, first to 5000 or something like that is the network, or just highest one is
     # IDEA: once network is detected, watch just area of score board keep track of teams, scores, time, quarter, shotclock,
@@ -128,37 +143,7 @@ def detect_tv(img):
 # </html>
 # """ % (message,)# cgitb.enable()
 
-class upfile(object):
 
-    def __init__(self):
-        self.script_dir = os.path.dirname(__file__)
-        self.errors = []
-
-
-    def __call__(self, environ, start_response):
-
-
-        f = open(os.path.join(self.script_dir, 'index.html'))
-        self.output = f.read()
-        f.close()
-
-        self.response_content_type = 'text/html;charset=UTF-8'
-        fields = None
-        if 'POST' == environ['REQUEST_METHOD'] :
-            fields = cgi.FieldStorage(fp=environ['wsgi.input'],environ=environ, keep_blank_values=1)
-            fileitem = fields['file']
-            fn = os.path.basename(fileitem.filename)
-            open('uploads/' + fn, 'wb').write(fileitem.file.read())
-
-
-        self.output = self.output % {"filepath":str(fields)} # Just to see the contents
-
-        response_headers = [('Content-type', self.response_content_type),('Content-Length', str(len(self.output)))]
-        status = '200 OK'
-        start_response(status, response_headers)
-        return [self.output]
-
-application = upfile()
 
 # form=cgi.FieldStorage()
 # who = form.getvalue('who')	# we expect certain fields to be there, value may be None if field is left blank
@@ -167,10 +152,10 @@ application = upfile()
 
 
 # cap = cv2.VideoCapture("nba_highlights/ESPN Nets Grizzlies.mp4")
-# cap = cv2.VideoCapture("nba_highlights/ESPN Lakers Warriors.mp4")
+cap = cv2.VideoCapture("nba_highlights/ESPN Lakers Warriors.mp4")
 # cap = cv2.VideoCapture("nba_highlights/Ballys Bucks Wizards.mp4")
 # cap = cv2.VideoCapture("nba_highlights/Ballys Lakers Pelicans.mp4")
-cap = cv2.VideoCapture("nba_highlights/TNT Clippers Nuggets.mp4")
+# cap = cv2.VideoCapture("nba_highlights/TNT Clippers Nuggets.mp4")
 # myColorFinder = ColorFinder()
 
 while True:
@@ -178,8 +163,8 @@ while True:
     # img = cv2.GaussianBlur(img, (9, 11), 0)
     # img = cv2.blur(img,(3,3))
 
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    edges = cv2.Canny(gray,50,150,apertureSize = 3)
+    # gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    # edges = cv2.Canny(gray,50,150,apertureSize = 3)
 
     # cv2.imshow("img", img)
     # img1 = img[643:702, 800:]
@@ -281,12 +266,44 @@ while True:
     # height = img.shape[0]
     # print(width, height)
     dim = (1920, 1080)
-    resized_img = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
+    img = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
     # width = resized_img.shape[1]
     # height = resized_img.shape[0]
     # print(width, height)
+    score_bug =[]
+    network, score = detect_tv(img)
+    w, h = 0, 0
+    width, height = dim
+    if(score > 0):
+        if network == "ballys":
+            score_bug = img[980:1040, 40:960].copy()
+            # cv2.blur(img[980:1040, 40:960], 5, 5)
 
-    processed_pic = detect_tv(resized_img)
+            cv2.rectangle(img, (40,980), (960,1040), (0, 0, 255), -1) #TNT SCOREBUG
+        elif network == "espn":
+            score_bug = img[960:1060, 50:1080].copy()
+            # cv2.blur(img[960:1060, 50:1080], (5, 5))
+
+            cv2.rectangle(img, (50,960), (1080,1060), (0, 0, 255), -1) #TNT SCOREBUG
+        elif network == "tnt":
+            score_bug = img[860:950, 1280:1680].copy()
+            # cv2.GaussianBlur(img[860:950, 1280:1680], (9, 11), 0)
+
+            cv2.rectangle(img, (1250,850), (1700,960), (0, 0, 255), -1) #TNT SCOREBUG
+
+        print(network)
+
+    x_offset = y_offset = 0
+    if(len(score_bug)):
+        x_offset=960-int(.5*(score_bug.shape[1]))
+        y_offset=900
+        img[y_offset:y_offset+score_bug.shape[0], x_offset:x_offset+score_bug.shape[1]] = score_bug
+
+    cv2.imshow("img", img)
+
+        # print(pt)
+        # i+= 1
+        # if (i == 1):
     # cv2.imshow("mat", processed_pic)
 
     # ret,thresh = cv2.threshold(gray,50,255,cv2.THRESH_BINARY_INV)
