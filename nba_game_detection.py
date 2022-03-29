@@ -105,6 +105,7 @@ def detect_tv(img):
 # form = cgi.FieldStorage()
 # @app.route("/index")
 # def get_video():
+cgitb.enable()
 form = cgi.FieldStorage()
 # Get filename here.
 fileitem = form['filename']
