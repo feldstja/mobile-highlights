@@ -1,6 +1,10 @@
 import cv2
 import numpy as np
+import cgi, cgitb
+import os
 # import cvzone
+
+
 #
 # from cvzone.ColorModule import ColorFinder
 # hog = cv2.HOGDescriptor()
@@ -98,6 +102,28 @@ def detect_tv(img):
     #       when no score board is detected, all variables stay what they were before then can be updated later
 
 
+# form = cgi.FieldStorage()
+# @app.route("/index")
+# def get_video():
+form = cgi.FieldStorage()
+# Get filename here.
+fileitem = form['filename']
+# Test if the file was uploaded
+if fileitem.filename:
+   # strip leading path from file name to avoid
+   # directory traversal attacks
+   fn = os.path.basename(fileitem.filename)
+   open('/tmp/' + fn, 'wb').write(fileitem.file.read())
+   message = 'The file "' + fn + '" was uploaded successfully'
+else:
+   message = 'No file was uploaded'
+print(message)
+
+# cgitb.enable()
+# form=cgi.FieldStorage()
+# who = form.getvalue('who')	# we expect certain fields to be there, value may be None if field is left blank
+# names = form.keys()		# all the input names for which values exist
+# sports = form.getlist('sports') # which might be a <select multiple name="sports">
 
 
 # cap = cv2.VideoCapture("nba_highlights/ESPN Nets Grizzlies.mp4")
