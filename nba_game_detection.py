@@ -108,7 +108,7 @@ def detect_tv(img):
 cgitb.enable()
 form = cgi.FieldStorage()
 # Get filename here.
-fileitem = form['filename']
+fileitem = form['file']
 # Test if the file was uploaded
 if fileitem.filename:
    # strip leading path from file name to avoid
