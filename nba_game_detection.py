@@ -120,7 +120,12 @@ else:
    message = 'No file was uploaded'
 print """\
 Content-Type: text/html\n
-# cgitb.enable()
+<html>
+<body>
+   <p>%s</p>
+</body>
+</html>
+""" % (message,)# cgitb.enable()
 # form=cgi.FieldStorage()
 # who = form.getvalue('who')	# we expect certain fields to be there, value may be None if field is left blank
 # names = form.keys()		# all the input names for which values exist
