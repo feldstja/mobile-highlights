@@ -3,6 +3,7 @@ import numpy as np
 import cgi, cgitb
 import os
 # import cvzone
+cgitb.enable()
 
 
 #
@@ -105,27 +106,60 @@ def detect_tv(img):
 # form = cgi.FieldStorage()
 # @app.route("/index")
 # def get_video():
-cgitb.enable()
-form = cgi.FieldStorage()
-# Get filename here.
-fileitem = form['file']
-# Test if the file was uploaded
-if fileitem.filename:
-   # strip leading path from file name to avoid
-   # directory traversal attacks
-   fn = os.path.basename(fileitem.filename)
-   open('/tmp/' + fn, 'wb').write(fileitem.file.read())
-   message = 'The file "' + fn + '" was uploaded successfully'
-else:
-   message = 'No file was uploaded'
-print """\
-Content-Type: text/html\n
-<html>
-<body>
-   <p>%s</p>
-</body>
-</html>
-""" % (message,)# cgitb.enable()
+# cgitb.enable()
+# form = cgi.FieldStorage()
+# # Get filename here.
+# fileitem = form['file']
+# # Test if the file was uploaded
+# if fileitem.filename:
+#    # strip leading path from file name to avoid
+#    # directory traversal attacks
+#    fn = os.path.basename(fileitem.filename)
+#    open('/tmp/' + fn, 'wb').write(fileitem.file.read())
+#    message = 'The file "' + fn + '" was uploaded successfully'
+# else:
+#    message = 'No file was uploaded'
+# print """\
+# Content-Type: text/html\n
+# <html>
+# <body>
+#    <p>%s</p>
+# </body>
+# </html>
+# """ % (message,)# cgitb.enable()
+
+class upfile(object):
+
+    def __init__(self):
+        self.script_dir = os.path.dirname(__file__)
+        self.errors = []
+
+
+    def __call__(self, environ, start_response):
+
+
+        f = open(os.path.join(self.script_dir, 'index.html'))
+        self.output = f.read()
+        f.close()
+
+        self.response_content_type = 'text/html;charset=UTF-8'
+        fields = None
+        if 'POST' == environ['REQUEST_METHOD'] :
+            fields = cgi.FieldStorage(fp=environ['wsgi.input'],environ=environ, keep_blank_values=1)
+            fileitem = fields['file']
+            fn = os.path.basename(fileitem.filename)
+            open('uploads/' + fn, 'wb').write(fileitem.file.read())
+
+
+        self.output = self.output % {"filepath":str(fields)} # Just to see the contents
+
+        response_headers = [('Content-type', self.response_content_type),('Content-Length', str(len(self.output)))]
+        status = '200 OK'
+        start_response(status, response_headers)
+        return [self.output]
+
+application = upfile()
+
 # form=cgi.FieldStorage()
 # who = form.getvalue('who')	# we expect certain fields to be there, value may be None if field is left blank
 # names = form.keys()		# all the input names for which values exist
